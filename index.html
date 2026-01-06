@@ -513,7 +513,7 @@
     });
     const floor = new THREE.Mesh(floorGeom, floorMat);
     floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = true;
+    floor.receiveShadow = false;
     scene.add(floor);
 
     const glowGeom = new THREE.CircleGeometry(1.6, 40);
