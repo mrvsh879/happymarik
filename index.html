@@ -504,18 +504,21 @@
     dirLight.shadow.camera.bottom = -7;
     scene.add(dirLight);
 
-    // Старый круглый "подиум" под Мариком
+    // ТЁМНЫЙ КРУГ-ПОЛ ПОД МАРИКОМ — ДЕЛАЕМ ЕГО ПОЛНОСТЬЮ ПРОЗРАЧНЫМ
     const floorGeom = new THREE.CircleGeometry(4, 64);
     const floorMat = new THREE.MeshStandardMaterial({
       color: 0x181c30,
       roughness: 0.75,
-      metalness: 0.05
+      metalness: 0.05,
+      transparent: true,
+      opacity: 0.0   // <-- круг есть в сцене, но невидимый
     });
     const floor = new THREE.Mesh(floorGeom, floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = false;
     scene.add(floor);
 
+    // Маленький голубой светящийся круг (оставляем как есть)
     const glowGeom = new THREE.CircleGeometry(1.6, 40);
     const glowMat = new THREE.MeshBasicMaterial({
       color: 0x5f9dff,
