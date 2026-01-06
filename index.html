@@ -2,10 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Счастливый Марик — 3D Remy</title>
+  <title>Счастливый Марик — 3D MVP</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <meta name="description" content="Интерактивный 3D Марик — персонаж из Mixamo, которого можно крутить, гладить и тыкать." />
+  <meta name="description" content="Интерактивный 3D Марик — персонаж, которого можно крутить, гладить и тыкать." />
   <meta name="theme-color" content="#151826" />
 
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet" />
@@ -135,11 +135,10 @@
 <div id="error-msg">
   <div>
     <div style="font-size:22px;margin-bottom:10px;">Упс… Что-то пошло не так 🧯</div>
-    <div>Не удалось запустить 3D-сцену. Попробуй обновить страницу или открыть сайт в современном браузере (Chrome / Firefox / Edge).</div>
+    <div>Не удалось запустить 3D-сцену. Попробуй обновить страницу или открыть сайт в современном браузере.</div>
   </div>
 </div>
 
-<!-- ВЕСЬ JS — МОДУЛЬ, ИМПОРТЫ ИДУТ ИЗ ЛОКАЛЬНЫХ ФАЙЛОВ -->
 <script type="module">
   import * as THREE from './three.module.js';
   import { FBXLoader } from './FBXLoader.js';
@@ -188,7 +187,6 @@
     }
     updateCamera();
 
-    // Свет
     const hemiLight = new THREE.HemisphereLight(0xf5f7ff, 0x080814, 1.25);
     scene.add(hemiLight);
 
@@ -205,7 +203,6 @@
     dirLight.shadow.camera.bottom = -7;
     scene.add(dirLight);
 
-    // Пол / подиум
     const floorGeom = new THREE.CircleGeometry(4, 64);
     const floorMat = new THREE.MeshStandardMaterial({
       color: 0x181c30,
@@ -228,12 +225,10 @@
     glow.position.y = 0.01;
     scene.add(glow);
 
-    // Группа персонажа
     const marik = new THREE.Group();
     marik.position.y = 0;
     scene.add(marik);
 
-    // Загрузка FBX
     const loader = new FBXLoader();
     let mixer = null;
 
@@ -331,7 +326,6 @@
       }
     });
 
-    // Управление камерой
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
@@ -375,10 +369,8 @@
       updateCamera();
     }, { passive: true });
 
-    // Анимация
     const clock = new THREE.Clock();
     let elapsed = 0;
-    let angryBoost = 0;
 
     function animate() {
       requestAnimationFrame(animate);
@@ -389,18 +381,6 @@
 
       marik.position.y = Math.sin(elapsed * 2) * 0.05;
       marik.rotation.y = Math.sin(elapsed * 0.5) * 0.15;
-
-      if (isAngry) {
-        const timeSince = performance.now() - angryTimer;
-        const k = Math.max(0, 1 - timeSince / 1200);
-        angryBoost = k;
-        marik.scale.set(1 + 0.08 * k, 1 + 0.08 * k, 1 + 0.08 * k);
-        if (k <= 0.01) {
-          isAngry = false;
-          angryBoost = 0;
-          marik.scale.set(1, 1, 1);
-        }
-      }
 
       renderer.render(scene, camera);
     }
