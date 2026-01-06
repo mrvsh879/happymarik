@@ -140,11 +140,9 @@
   </div>
 </div>
 
-<!-- three.js с unpkg -->
 <script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
 
 <script>
-  // Если three.js не загрузился — показываем сообщение
   if (!window.THREE) {
     document.getElementById('error-msg').style.display = 'flex';
   } else {
@@ -173,10 +171,10 @@
       100
     );
 
-    const target = new THREE.Vector3(0, 1.2, 0);
-    let camRadius = 5;
-    let camYaw = 0;
-    let camPitch = 0.9; // 0..PI
+    const target = new THREE.Vector3(0, 1.3, 0);
+    let camRadius = 4.8;
+    let camYaw = 0.4;
+    let camPitch = 0.9;
 
     function updateCamera() {
       const x = camRadius * Math.sin(camPitch) * Math.sin(camYaw);
@@ -188,7 +186,7 @@
     updateCamera();
 
     // ===== СВЕТ =====
-    const hemiLight = new THREE.HemisphereLight(0xeaf3ff, 0x080814, 1.3);
+    const hemiLight = new THREE.HemisphereLight(0xf5f7ff, 0x080814, 1.25);
     scene.add(hemiLight);
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.1);
@@ -204,44 +202,46 @@
     dirLight.shadow.camera.bottom = -7;
     scene.add(dirLight);
 
-    // ===== СЦЕНА: ПОЛ / ГЛОУ =====
+    // ===== ПОЛ =====
     const floorGeometry = new THREE.CircleGeometry(4, 64);
     const floorMaterial = new THREE.MeshStandardMaterial({
       color: 0x181c30,
-      roughness: 0.7,
-      metalness: 0.1
+      roughness: 0.75,
+      metalness: 0.05
     });
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
 
-    const glowGeometry = new THREE.CircleGeometry(1.3, 40);
+    const glowGeometry = new THREE.CircleGeometry(1.6, 40);
     const glowMaterial = new THREE.MeshBasicMaterial({
-      color: 0x64a5ff,
+      color: 0x5f9dff,
       transparent: true,
-      opacity: 0.4
+      opacity: 0.45
     });
     const glow = new THREE.Mesh(glowGeometry, glowMaterial);
     glow.rotation.x = -Math.PI / 2;
     glow.position.y = 0.01;
     scene.add(glow);
 
-    // ===== ПЕРСОНАЖ: МАРИК-МЕМОДЗИ =====
+    // ===== ПЕРСОНАЖ — НОВЫЙ МЕМОДЗИ-МАРИК =====
     const marik = new THREE.Group();
-    marik.position.y = 0.6;
+    marik.position.y = 0.55;
     scene.add(marik);
 
-    // Цвета
-    const skinColor = 0xffd3b3;
-    const hairColor = 0x2b1a16;
+    // ПАЛИТРА
+    const skinColor = 0xffc9a8;
+    const hairColor = 0x3a2620;
     const shirtColor = 0x4d7dff;
-    const pantsColor = 0x202840;
-    const shoeColor = 0x0d0f18;
+    const shirtAccent = 0x7ea2ff;
+    const pantsColor = 0x1e2438;
+    const shoeColor = 0x080a12;
+    const cheekColor = 0xff9fb0;
 
     const matSkin = new THREE.MeshStandardMaterial({
       color: skinColor,
-      roughness: 0.5,
+      roughness: 0.45,
       metalness: 0.05
     });
     const matHair = new THREE.MeshStandardMaterial({
@@ -252,16 +252,21 @@
     const matShirt = new THREE.MeshStandardMaterial({
       color: shirtColor,
       roughness: 0.5,
-      metalness: 0.2
+      metalness: 0.18
+    });
+    const matShirtAccent = new THREE.MeshStandardMaterial({
+      color: shirtAccent,
+      roughness: 0.55,
+      metalness: 0.15
     });
     const matPants = new THREE.MeshStandardMaterial({
       color: pantsColor,
-      roughness: 0.6,
-      metalness: 0.15
+      roughness: 0.65,
+      metalness: 0.12
     });
     const matShoes = new THREE.MeshStandardMaterial({
       color: shoeColor,
-      roughness: 0.7,
+      roughness: 0.75,
       metalness: 0.2
     });
     const matEyes = new THREE.MeshStandardMaterial({
@@ -275,60 +280,101 @@
       metalness: 0.1
     });
     const matMouth = new THREE.MeshStandardMaterial({
-      color: 0x8b3b30,
+      color: 0xa14534,
       roughness: 0.5,
       metalness: 0.1
     });
+    const matCheek = new THREE.MeshStandardMaterial({
+      color: cheekColor,
+      roughness: 0.7,
+      metalness: 0.05
+    });
 
-    // Туловище
-    const torsoGeom = new THREE.CylinderGeometry(0.55, 0.6, 1.4, 32);
+    // ТОРС
+    const torsoGeom = new THREE.CylinderGeometry(0.55, 0.6, 1.1, 32);
     const torso = new THREE.Mesh(torsoGeom, matShirt);
     torso.castShadow = true;
     torso.receiveShadow = true;
+    torso.position.y = 0.1;
     marik.add(torso);
 
-    // Плечи/ворот
-    const neckGeom = new THREE.TorusGeometry(0.38, 0.05, 16, 40);
-    const neck = new THREE.Mesh(neckGeom, matWhite);
-    neck.position.y = 0.75;
-    neck.rotation.x = Math.PI / 2;
+    // Небольшой градиентный «низ» футболки
+    const hemGeom = new THREE.CylinderGeometry(0.6, 0.62, 0.12, 32);
+    const hem = new THREE.Mesh(hemGeom, matShirtAccent);
+    hem.castShadow = true;
+    hem.position.y = -0.6;
+    torso.add(hem);
+
+    // ПЛЕЧИ / ВОРОТНИК
+    const collarGeom = new THREE.TorusGeometry(0.37, 0.055, 18, 40);
+    const collar = new THREE.Mesh(collarGeom, matShirtAccent);
+    collar.position.y = 0.6;
+    collar.rotation.x = Math.PI / 2;
+    collar.castShadow = true;
+    marik.add(collar);
+
+    // ШЕЯ
+    const neckGeom = new THREE.CylinderGeometry(0.23, 0.23, 0.22, 20);
+    const neck = new THREE.Mesh(neckGeom, matSkin);
+    neck.position.y = 0.87;
+    neck.castShadow = true;
     marik.add(neck);
 
-    // Голова
-    const headGeom = new THREE.SphereGeometry(0.55, 32, 32);
+    // ГОЛОВА — большая, мемодзи-стайл
+    const headGeom = new THREE.SphereGeometry(0.7, 40, 40);
     const head = new THREE.Mesh(headGeom, matSkin);
-    head.position.y = 1.4;
+    head.position.y = 1.45;
     head.castShadow = true;
     marik.add(head);
 
-    // Волосы "шлемом"
-    const hairGeom = new THREE.SphereGeometry(0.57, 32, 32, 0, Math.PI*2, 0, Math.PI/1.5);
+    // ВОЛОСЫ — аккуратная «шапка»
+    const hairGeom = new THREE.SphereGeometry(0.71, 40, 40, 0, Math.PI * 2, 0, Math.PI / 1.7);
     const hair = new THREE.Mesh(hairGeom, matHair);
-    hair.position.y = 1.45;
+    hair.position.y = 1.52;
+    hair.scale.z = 0.92;
     hair.castShadow = true;
     marik.add(hair);
 
-    // Чёлка
-    const fringeGeom = new THREE.CapsuleGeometry(0.16, 0.1, 8, 16);
-    const fringe = new THREE.Mesh(fringeGeom, matHair);
-    fringe.position.set(0, 1.55, 0.45);
-    fringe.rotation.x = Math.PI / 3;
-    marik.add(fringe);
+    // УШИ
+    function makeEar(side) {
+      const earGeom = new THREE.SphereGeometry(0.12, 20, 20);
+      const ear = new THREE.Mesh(earGeom, matSkin);
+      ear.castShadow = true;
+      ear.position.set(0.63 * side, 1.43, 0);
+      marik.add(ear);
+      return ear;
+    }
+    makeEar(1);
+    makeEar(-1);
 
-    // Глаза
+    // ЩЁЧКИ
+    function makeCheek(side) {
+      const cheekGeom = new THREE.SphereGeometry(0.12, 16, 16);
+      const cheek = new THREE.Mesh(cheekGeom, matCheek);
+      cheek.position.set(0.3 * side, 1.32, 0.46);
+      cheek.scale.set(1.2, 0.8, 1);
+      cheek.castShadow = false;
+      marik.add(cheek);
+      return cheek;
+    }
+    makeCheek(1);
+    makeCheek(-1);
+
+    // ГЛАЗА
     function makeEye(side) {
-      const eyeWhiteGeom = new THREE.SphereGeometry(0.12, 16, 16);
+      const eyeWhiteGeom = new THREE.SphereGeometry(0.14, 20, 20);
       const white = new THREE.Mesh(eyeWhiteGeom, matWhite);
-      white.position.set(0.18 * side, 1.45, 0.45);
+      white.position.set(0.23 * side, 1.42, 0.54);
+      white.scale.y = 0.95;
 
-      const pupilGeom = new THREE.SphereGeometry(0.07, 16, 16);
+      const pupilGeom = new THREE.SphereGeometry(0.08, 20, 20);
       const pupil = new THREE.Mesh(pupilGeom, matEyes);
-      pupil.position.set(0, 0, 0.05);
+      pupil.position.set(0, 0, 0.06);
       white.add(pupil);
 
-      const highlightGeom = new THREE.SphereGeometry(0.03, 8, 8);
+      const highlightGeom = new THREE.SphereGeometry(0.03, 10, 10);
       const highlight = new THREE.Mesh(highlightGeom, new THREE.MeshBasicMaterial({ color: 0xffffff }));
-      highlight.position.set(0.03, 0.03, 0.05);
+      highlight.position.set(0.03, 0.04, 0.04);
       pupil.add(highlight);
 
       marik.add(white);
@@ -337,11 +383,11 @@
     const leftEye = makeEye(-1);
     const rightEye = makeEye(1);
 
-    // Брови
+    // БРОВИ
     function makeBrow(side) {
-      const browGeom = new THREE.BoxGeometry(0.3, 0.06, 0.06);
+      const browGeom = new THREE.BoxGeometry(0.32, 0.07, 0.06);
       const brow = new THREE.Mesh(browGeom, matHair);
-      brow.position.set(0.21 * side, 1.6, 0.4);
+      brow.position.set(0.25 * side, 1.58, 0.43);
       brow.castShadow = true;
       marik.add(brow);
       return brow;
@@ -349,46 +395,48 @@
     const leftBrow = makeBrow(-1);
     const rightBrow = makeBrow(1);
 
-    // Нос
-    const noseGeom = new THREE.ConeGeometry(0.07, 0.18, 20);
+    // НОС
+    const noseGeom = new THREE.ConeGeometry(0.08, 0.2, 22);
     const nose = new THREE.Mesh(noseGeom, matSkin);
     nose.rotation.x = Math.PI / 2;
-    nose.position.set(0, 1.42, 0.52);
+    nose.position.set(0, 1.36, 0.6);
     nose.castShadow = true;
     marik.add(nose);
 
-    // Рот (улыбка)
-    const mouthGeom = new THREE.TorusGeometry(0.18, 0.04, 12, 40, Math.PI);
+    // РОТ — мягкая улыбка
+    const mouthGeom = new THREE.TorusGeometry(0.22, 0.05, 18, 40, Math.PI);
     const mouth = new THREE.Mesh(mouthGeom, matMouth);
     mouth.rotation.set(Math.PI, 0, 0);
-    mouth.position.set(0, 1.25, 0.48);
+    mouth.position.set(0, 1.23, 0.54);
     marik.add(mouth);
 
-    // Небольшой "язык" внутри
-    const tongueGeom = new THREE.SphereGeometry(0.08, 16, 16, 0, Math.PI, 0, Math.PI);
-    const tongue = new THREE.Mesh(tongueGeom, new THREE.MeshStandardMaterial({color:0xff6b8b, roughness:0.6}));
-    tongue.position.set(0, -0.04, 0.05);
+    const tongueGeom = new THREE.SphereGeometry(0.1, 20, 20, 0, Math.PI, 0, Math.PI);
+    const tongue = new THREE.Mesh(
+      tongueGeom,
+      new THREE.MeshStandardMaterial({ color: 0xff7d9a, roughness: 0.6 })
+    );
+    tongue.position.set(0, -0.04, 0.07);
     mouth.add(tongue);
 
-    // Руки
+    // РУКИ
     function makeArm(side) {
-      const upperGeom = new THREE.CylinderGeometry(0.13, 0.15, 0.85, 22);
+      const upperGeom = new THREE.CylinderGeometry(0.16, 0.18, 0.8, 22);
       const upper = new THREE.Mesh(upperGeom, matShirt);
       upper.castShadow = true;
-      upper.position.set(0.55 * side, 0.4, 0);
-      upper.rotation.z = side * -0.25;
+      upper.position.set(0.6 * side, 0.25, 0);
+      upper.rotation.z = side * -0.2;
 
-      const foreGeom = new THREE.CylinderGeometry(0.12, 0.13, 0.8, 22);
+      const foreGeom = new THREE.CylinderGeometry(0.13, 0.14, 0.75, 22);
       const fore = new THREE.Mesh(foreGeom, matSkin);
       fore.castShadow = true;
-      fore.position.set(0, -0.5, 0.05);
-      fore.rotation.x = 0.3;
+      fore.position.set(0, -0.5, 0.08);
+      fore.rotation.x = 0.25;
       upper.add(fore);
 
-      const handGeom = new THREE.SphereGeometry(0.16, 18, 18);
+      const handGeom = new THREE.SphereGeometry(0.17, 18, 18);
       const hand = new THREE.Mesh(handGeom, matSkin);
       hand.castShadow = true;
-      hand.position.set(0, -0.46, 0.08);
+      hand.position.set(0, -0.45, 0.08);
       fore.add(hand);
 
       marik.add(upper);
@@ -397,17 +445,17 @@
     const leftArm = makeArm(-1);
     const rightArm = makeArm(1);
 
-    // Ноги
+    // НОГИ
     function makeLeg(side) {
       const upperLegGeom = new THREE.CylinderGeometry(0.18, 0.2, 0.7, 20);
       const leg = new THREE.Mesh(upperLegGeom, matPants);
       leg.castShadow = true;
-      leg.position.set(0.25 * side, -0.9, 0.07);
+      leg.position.set(0.27 * side, -0.75, 0.08);
 
-      const shoeGeom = new THREE.BoxGeometry(0.42, 0.25, 0.7);
+      const shoeGeom = new THREE.BoxGeometry(0.44, 0.25, 0.75);
       const shoe = new THREE.Mesh(shoeGeom, matShoes);
       shoe.castShadow = true;
-      shoe.position.set(0, -0.5, 0.25);
+      shoe.position.set(0, -0.45, 0.25);
       leg.add(shoe);
 
       marik.add(leg);
@@ -449,7 +497,6 @@
       isHoveringMarik = hits.length > 0;
     }
 
-    // Глажение
     window.addEventListener("pointermove", (e) => {
       updateMouse(e);
       checkHover();
@@ -462,7 +509,6 @@
       }
     });
 
-    // Тыкание
     window.addEventListener("pointerdown", (e) => {
       updateMouse(e);
       raycaster.setFromCamera(mouse, camera);
@@ -485,7 +531,7 @@
       }
     });
 
-    // ===== УПРАВЛЕНИЕ КАМЕРОЙ =====
+    // ===== КАМЕРА =====
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
@@ -515,8 +561,8 @@
       camYaw -= dx * ROT_SPEED;
       camPitch -= dy * ROT_SPEED;
 
-      const minPitch = 0.3;
-      const maxPitch = Math.PI - 0.3;
+      const minPitch = 0.4;
+      const maxPitch = Math.PI - 0.4;
       camPitch = Math.max(minPitch, Math.min(maxPitch, camPitch));
 
       updateCamera();
@@ -525,7 +571,7 @@
     window.addEventListener("wheel", (e) => {
       const ZOOM_SPEED = 0.0015;
       camRadius += e.deltaY * ZOOM_SPEED * camRadius;
-      camRadius = Math.max(3, Math.min(8, camRadius));
+      camRadius = Math.max(3.2, Math.min(7, camRadius));
       updateCamera();
     }, { passive: true });
 
@@ -540,15 +586,19 @@
       requestAnimationFrame(animate);
       const t = clock.getElapsedTime();
 
-      // дыхание / лёгкая покачка
+      // дыхание/покачивание
       const breathe = Math.sin(t * 2.0) * 0.03;
       torso.scale.y = baseTorsoScaleY + breathe;
-      torso.position.y = breathe * 0.1;
+      torso.position.y = 0.1 + breathe * 0.15;
+      marik.position.y = 0.55 + Math.sin(t * 1.7) * 0.02;
 
-      // лёгкая качка рук
+      // руки
       const handWave = Math.sin(t * 2.5) * 0.08;
-      leftArm.upper.rotation.z = -0.25 - handWave;
-      rightArm.upper.rotation.z = 0.25 + handWave;
+      leftArm.upper.rotation.z = -0.2 - handWave * 0.6;
+      rightArm.upper.rotation.z = 0.2 + handWave * 0.6;
+
+      // лёгкий наклон головы
+      head.rotation.z = Math.sin(t * 1.2) * 0.03;
 
       // моргание
       const blinkPeriod = 3.5;
@@ -561,17 +611,17 @@
       leftEye.white.scale.y = eyeScaleY;
       rightEye.white.scale.y = eyeScaleY;
 
-      // злость (цвет + брови)
+      // злость
       if (isAngry) {
         const elapsed = performance.now() - angryTimer;
         const k = Math.max(0, 1 - elapsed / 1200);
         angryColorBoost = k;
-        marik.scale.set(1 + 0.1 * k, 1 + 0.1 * k, 1 + 0.1 * k);
+        marik.scale.set(1 + 0.09 * k, 1 + 0.09 * k, 1 + 0.09 * k);
 
-        leftBrow.position.y = baseLeftBrowY + 0.12 * k;
-        rightBrow.position.y = baseRightBrowY + 0.12 * k;
-        leftBrow.rotation.z = -0.2 * k;
-        rightBrow.rotation.z = 0.2 * k;
+        leftBrow.position.y = baseLeftBrowY + 0.13 * k;
+        rightBrow.position.y = baseRightBrowY + 0.13 * k;
+        leftBrow.rotation.z = -0.25 * k;
+        rightBrow.rotation.z = 0.25 * k;
 
         if (k <= 0.01) {
           isAngry = false;
