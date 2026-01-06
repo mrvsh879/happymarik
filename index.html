@@ -329,6 +329,54 @@
     windowMesh.position.set(-2.5, 3.2, -4.99);
     backgroundGroup.add(windowMesh);
 
+    // "рамка"
+    const windowGeom = new THREE.PlaneGeometry(4, 2);
+    const windowMat = new THREE.MeshStandardMaterial({
+      color: 0x11131e,
+      emissive: 0x1f5cff,
+      emissiveIntensity: 0.35,
+      metalness: 0.2,
+      roughness: 0.4
+    });
+    const windowMesh = new THREE.Mesh(windowGeom, windowMat);
+    windowMesh.position.set(-2.5, 3.2, -4.99);
+    backgroundGroup.add(windowMesh);
+    
+    // === ТЕКСТ НА ЭКРАНЕ ===
+    const textCanvas = document.createElement("canvas");
+    textCanvas.width = 1024;
+    textCanvas.height = 512;
+
+    const ctx = textCanvas.getContext("2d");
+
+    // белый фон
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, textCanvas.width, textCanvas.height);
+
+    // текст
+    ctx.font = "bold 90px Nunito";
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Везет тому кто везет", textCanvas.width / 2, textCanvas.height / 2);
+
+    const textTexture = new THREE.CanvasTexture(textCanvas);
+
+    const screenMat = new THREE.MeshBasicMaterial({
+      map: textTexture,
+      transparent: true
+    });
+
+    const screen = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.9, 1.9),
+      screenMat
+    );
+
+    // чуть спереди, чтобы было видно поверх
+    screen.position.set(-2.5, 3.2, -4.98);
+
+    backgroundGroup.add(screen);
+
     // Рамы окна
     const frameMat = new THREE.MeshStandardMaterial({
       color: 0x101219,
