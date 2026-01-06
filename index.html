@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Счастливый Марик — 3D MVP</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>Счастливый Марик — 3D</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="description" content="Интерактивный 3D-кот Счастливый Марик — его можно крутить, гладить и тыкать." />
+  <meta name="theme-color" content="#151826" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet" />
+
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -14,6 +20,9 @@
       font-family: "Nunito", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: radial-gradient(circle at top, #3b5fff 0%, #151826 40%, #05060b 100%);
       color: #fff;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      touch-action: none; /* чтобы не дергалась страница на тач-устройствах */
     }
     #canvas-container {
       position: fixed;
@@ -27,6 +36,7 @@
       text-align: center;
       z-index: 10;
       pointer-events: none;
+      padding: 0 16px;
     }
     #title {
       font-size: 26px;
@@ -49,18 +59,22 @@
       border-radius: 999px;
       background: rgba(0,0,0,0.45);
       border: 1px solid rgba(255,255,255,0.12);
-      font-size: 12px;
+      font-size: 11px;
       display: flex;
-      gap: 16px;
+      flex-wrap: wrap;
+      gap: 10px 16px;
       align-items: center;
       z-index: 10;
       backdrop-filter: blur(12px);
+      max-width: 90vw;
+      justify-content: center;
     }
     #hints span {
       opacity: 0.9;
       display: inline-flex;
       gap: 4px;
       align-items: center;
+      white-space: nowrap;
     }
     #speech {
       position: fixed;
@@ -79,6 +93,14 @@
       z-index: 15;
       box-shadow: 0 10px 30px rgba(0,0,0,0.6);
       backdrop-filter: blur(10px);
+      max-width: 90vw;
+    }
+
+    /* Чуть уменьшаем шрифты на телефонах */
+    @media (max-width: 600px) {
+      #title { font-size: 22px; }
+      #subtitle { font-size: 12px; }
+      #speech { font-size: 16px; }
     }
   </style>
 </head>
@@ -95,10 +117,11 @@
 <div id="hints">
   <span>🖱️ ЛКМ + мышь — крутить камеру</span>
   <span>🖱️ Колёсико — зум</span>
-  <span>🤚 Веди мышкой по Марику — гладь</span>
-  <span>👆 Клик по Марику — ругается</span>
+  <span>🤚 Веди мышкой/пальцем по Марику — гладь</span>
+  <span>👆 Клик/тап по Марику — ругается</span>
 </div>
 
+<!-- three.js с CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r155/three.min.js"></script>
 
 <script>
@@ -363,6 +386,7 @@
     isHoveringMarik = hits.length > 0;
   }
 
+  // Глажение
   window.addEventListener("pointermove", (e) => {
     updateMouse(e);
     checkHover();
@@ -375,6 +399,7 @@
     }
   });
 
+  // Тыкание
   window.addEventListener("pointerdown", (e) => {
     updateMouse(e);
     raycaster.setFromCamera(mouse, camera);
@@ -434,6 +459,7 @@
     updateCameraFromSpherical();
   });
 
+  // Зум
   window.addEventListener("wheel", (e) => {
     const ZOOM_SPEED = 0.0015;
     spherical.radius += e.deltaY * ZOOM_SPEED * spherical.radius;
