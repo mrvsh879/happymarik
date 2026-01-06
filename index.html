@@ -139,15 +139,18 @@
   </div>
 </div>
 
-<!-- three.js и FBXLoader с CDN -->
-<script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
-<script src="https://unpkg.com/three@0.155.0/examples/js/loaders/FBXLoader.js"></script>
+<!-- ВЕСЬ JS — В MODULE-СКРИПТЕ -->
+<script type="module">
+  import * as THREE from 'https://unpkg.com/three@0.155.0/build/three.module.js';
+  import { FBXLoader } from 'https://unpkg.com/three@0.155.0/examples/jsm/loaders/FBXLoader.js';
 
-<script>
-  if (!window.THREE) {
-    document.getElementById('error-msg').style.display = 'flex';
-  } else {
+  const errorMsg = document.getElementById('error-msg');
+
+  try {
     initHappyMarik();
+  } catch (e) {
+    console.error(e);
+    errorMsg.style.display = 'flex';
   }
 
   function initHappyMarik() {
@@ -230,14 +233,14 @@
     marik.position.y = 0;
     scene.add(marik);
 
-    // Загрузка FBX-модели
-    const loader = new THREE.FBXLoader();
+    // Загрузка FBX
+    const loader = new FBXLoader();
     let mixer = null;
 
     loader.load(
-      "marik_idle.fbx",   // файл лежит рядом с index.html
+      'marik_idle.fbx',   // файл в корне репозитория
       (fbx) => {
-        const s = 0.01;   // масштаб Mixamo-модели
+        const s = 0.01;   // уменьшаем Mixamo-модель
         fbx.scale.set(s, s, s);
         fbx.position.set(0, 0, 0);
 
@@ -250,7 +253,6 @@
 
         marik.add(fbx);
 
-        // Анимация из файла (если есть)
         if (fbx.animations && fbx.animations.length > 0) {
           mixer = new THREE.AnimationMixer(fbx);
           const action = mixer.clipAction(fbx.animations[0]);
@@ -259,11 +261,12 @@
       },
       undefined,
       (err) => {
-        console.error("Ошибка загрузки FBX:", err);
+        console.error('Ошибка загрузки FBX:', err);
+        errorMsg.style.display = 'flex';
       }
     );
 
-    // Облако "речи"
+    // Облачко "речи"
     const speech = document.getElementById("speech");
     let speechTimeout = null;
 
@@ -276,7 +279,7 @@
       }, ms);
     }
 
-    // Raycaster & взаимодействие
+    // Raycaster и взаимодействие
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     let isHoveringMarik = false;
@@ -386,7 +389,7 @@
 
       if (mixer) mixer.update(delta);
 
-      // лёгкое «дыхание» сцены
+      // лёгкое покачивание
       marik.position.y = Math.sin(elapsed * 2) * 0.05;
       marik.rotation.y = Math.sin(elapsed * 0.5) * 0.15;
 
