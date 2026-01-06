@@ -139,10 +139,10 @@
   </div>
 </div>
 
-<!-- ВЕСЬ JS — В MODULE-СКРИПТЕ -->
+<!-- ВЕСЬ JS — МОДУЛЬ, ИМПОРТЫ ИДУТ ИЗ ЛОКАЛЬНЫХ ФАЙЛОВ -->
 <script type="module">
-  import * as THREE from 'https://unpkg.com/three@0.155.0/build/three.module.js';
-  import { FBXLoader } from 'https://unpkg.com/three@0.155.0/examples/jsm/loaders/FBXLoader.js';
+  import * as THREE from './three.module.js';
+  import { FBXLoader } from './FBXLoader.js';
 
   const errorMsg = document.getElementById('error-msg');
 
@@ -238,9 +238,9 @@
     let mixer = null;
 
     loader.load(
-      'marik_idle.fbx',   // файл в корне репозитория
+      'marik_idle.fbx',
       (fbx) => {
-        const s = 0.01;   // уменьшаем Mixamo-модель
+        const s = 0.01;
         fbx.scale.set(s, s, s);
         fbx.position.set(0, 0, 0);
 
@@ -266,7 +266,6 @@
       }
     );
 
-    // Облачко "речи"
     const speech = document.getElementById("speech");
     let speechTimeout = null;
 
@@ -279,7 +278,6 @@
       }, ms);
     }
 
-    // Raycaster и взаимодействие
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     let isHoveringMarik = false;
@@ -389,7 +387,6 @@
 
       if (mixer) mixer.update(delta);
 
-      // лёгкое покачивание
       marik.position.y = Math.sin(elapsed * 2) * 0.05;
       marik.rotation.y = Math.sin(elapsed * 0.5) * 0.15;
 
