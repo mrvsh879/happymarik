@@ -515,7 +515,7 @@
     });
     const floor = new THREE.Mesh(floorGeom, floorMat);
     floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = false;
+    floor.receiveShadow = true;
     scene.add(floor);
 
     // Маленький голубой светящийся круг (оставляем как есть)
