@@ -2,11 +2,14 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Счастливый Марик — 3D мемодзи</title>
+  <title>Счастливый Марик — 3D Remy</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <meta name="description" content="Интерактивный 3D Марик в стиле мемодзи — можно крутить, гладить и тыкать." />
+  <meta name="description" content="Интерактивный 3D Марик — персонаж из Mixamo, которого можно крутить, гладить и тыкать." />
   <meta name="theme-color" content="#151826" />
+
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet" />
+
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -114,50 +117,65 @@
 </head>
 <body>
 <div id="canvas-container"></div>
+
 <div id="ui">
-  <div id="title">Счастливый Марик 🧑‍🎨</div>
-  <div id="subtitle">Погладь меня — я замурчу. Тыкни в меня — я возмутюсь!</div>
+  <div id="title">Счастливый Марик 🧍‍♂️</div>
+  <div id="subtitle">Погладь меня — я замурчу. Тыкни в меня — я возм<strong>у</strong>щусь!</div>
 </div>
+
 <div id="speech"></div>
+
 <div id="hints">
   <span>🖱️ ЛКМ + мышь — крутить камеру</span>
   <span>🖱️ Колёсико — зум</span>
   <span>🤚 Веди мышкой/пальцем по Марику — гладь</span>
   <span>👆 Клик/тап по Марику — ругается</span>
 </div>
+
 <div id="error-msg">
   <div>
     <div style="font-size:22px;margin-bottom:10px;">Упс… Что-то пошло не так 🧯</div>
     <div>Не удалось запустить 3D-сцену. Попробуй обновить страницу или открыть сайт в современном браузере (Chrome / Firefox / Edge).</div>
   </div>
 </div>
-<script src="https://unpkg.com/three@latest/build/three.min.js"></script>
-<script src="https://unpkg.com/three@latest/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://unpkg.com/three@latest/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://unpkg.com/three@latest/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+<!-- three.js и FBXLoader с CDN -->
+<script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.155.0/examples/js/loaders/FBXLoader.js"></script>
+
 <script>
   if (!window.THREE) {
     document.getElementById('error-msg').style.display = 'flex';
   } else {
     initHappyMarik();
   }
+
   function initHappyMarik() {
     const container = document.getElementById("canvas-container");
+
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.setClearColor(0x05060b, 1);
     container.appendChild(renderer.domElement);
+
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x05060b, 0.08);
-    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+    scene.fog = new THREE.Fog(0x05060b, 6, 18);
+
+    const camera = new THREE.PerspectiveCamera(
+      55,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
     const target = new THREE.Vector3(0, 1.2, 0);
     let camRadius = 5;
-    let camYaw = 0;
+    let camYaw = 0.4;
     let camPitch = 0.9;
+
     function updateCamera() {
       const x = camRadius * Math.sin(camPitch) * Math.sin(camYaw);
       const y = camRadius * Math.cos(camPitch);
@@ -166,233 +184,89 @@
       camera.lookAt(target);
     }
     updateCamera();
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-    const hemiLight = new THREE.HemisphereLight(0xeaf3ff, 0x080814, 1.8);
+
+    // Свет
+    const hemiLight = new THREE.HemisphereLight(0xf5f7ff, 0x080814, 1.25);
     scene.add(hemiLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.1);
     dirLight.position.set(4, 8, 4);
     dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 4096;
-    dirLight.shadow.mapSize.height = 4096;
-    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 1;
     dirLight.shadow.camera.far = 20;
-    dirLight.shadow.camera.left = -8;
-    dirLight.shadow.camera.right = 8;
-    dirLight.shadow.camera.top = 8;
-    dirLight.shadow.camera.bottom = -8;
-    dirLight.shadow.bias = -0.0001;
+    dirLight.shadow.camera.left = -7;
+    dirLight.shadow.camera.right = 7;
+    dirLight.shadow.camera.top = 7;
+    dirLight.shadow.camera.bottom = -7;
     scene.add(dirLight);
-    const floorGeometry = new THREE.CircleGeometry(4, 128);
-    const floorMaterial = new THREE.MeshStandardMaterial({
+
+    // Пол / подиум
+    const floorGeom = new THREE.CircleGeometry(4, 64);
+    const floorMat = new THREE.MeshStandardMaterial({
       color: 0x181c30,
-      roughness: 0.8,
-      metalness: 0.2,
-      normalScale: new THREE.Vector2(0.5, 0.5)
+      roughness: 0.75,
+      metalness: 0.05
     });
-    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    const floor = new THREE.Mesh(floorGeom, floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
-    const glowGeometry = new THREE.CircleGeometry(1.5, 64);
-    const glowMaterial = new THREE.MeshBasicMaterial({
-      color: 0x64a5ff,
+
+    const glowGeom = new THREE.CircleGeometry(1.6, 40);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: 0x5f9dff,
       transparent: true,
-      opacity: 0.3,
-      blending: THREE.AdditiveBlending
+      opacity: 0.45
     });
-    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+    const glow = new THREE.Mesh(glowGeom, glowMat);
     glow.rotation.x = -Math.PI / 2;
     glow.position.y = 0.01;
     scene.add(glow);
+
+    // Группа персонажа
     const marik = new THREE.Group();
-    marik.position.y = 0.6;
+    marik.position.y = 0;
     scene.add(marik);
-    const skinColor = 0xffd3b3;
-    const hairColor = 0x2b1a16;
-    const shirtColor = 0x4d7dff;
-    const pantsColor = 0x202840;
-    const shoeColor = 0x0d0f18;
-    const matSkin = new THREE.MeshStandardMaterial({
-      color: skinColor,
-      roughness: 0.4,
-      metalness: 0.0,
-      skinning: false
-    });
-    const matHair = new THREE.MeshStandardMaterial({
-      color: hairColor,
-      roughness: 0.5,
-      metalness: 0.05
-    });
-    const matShirt = new THREE.MeshStandardMaterial({
-      color: shirtColor,
-      roughness: 0.3,
-      metalness: 0.1
-    });
-    const matPants = new THREE.MeshStandardMaterial({
-      color: pantsColor,
-      roughness: 0.4,
-      metalness: 0.1
-    });
-    const matShoes = new THREE.MeshStandardMaterial({
-      color: shoeColor,
-      roughness: 0.6,
-      metalness: 0.3
-    });
-    const matEyes = new THREE.MeshStandardMaterial({
-      color: 0x111111,
-      roughness: 0.1,
-      metalness: 0.9
-    });
-    const matWhite = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.2,
-      metalness: 0.0
-    });
-    const matMouth = new THREE.MeshStandardMaterial({
-      color: 0x8b3b30,
-      roughness: 0.4,
-      metalness: 0.0
-    });
-    const torsoGeom = new THREE.CylinderGeometry(0.55, 0.6, 1.4, 64, 8, true);
-    const torso = new THREE.Mesh(torsoGeom, matShirt);
-    torso.castShadow = true;
-    torso.receiveShadow = true;
-    marik.add(torso);
-    const neckGeom = new THREE.TorusGeometry(0.38, 0.05, 32, 64);
-    const neck = new THREE.Mesh(neckGeom, matWhite);
-    neck.position.y = 0.75;
-    neck.rotation.x = Math.PI / 2;
-    marik.add(neck);
-    const headGeom = new THREE.SphereGeometry(0.55, 64, 64);
-    headGeom.scale(1, 1.1, 0.9); // More oval head for realism
-    const head = new THREE.Mesh(headGeom, matSkin);
-    head.position.y = 1.4;
-    head.castShadow = true;
-    marik.add(head);
-    const hairGeom = new THREE.SphereGeometry(0.57, 64, 64, 0, Math.PI*2, 0, Math.PI/1.4);
-    const hair = new THREE.Mesh(hairGeom, matHair);
-    hair.position.y = 1.45;
-    hair.castShadow = true;
-    marik.add(hair);
-    // Add more hair strands for realism
-    for (let i = 0; i < 5; i++) {
-      const strandGeom = new THREE.CapsuleGeometry(0.04, 0.3 + Math.random()*0.2, 16, 32);
-      const strand = new THREE.Mesh(strandGeom, matHair);
-      strand.position.set((Math.random()-0.5)*0.4, 1.6 + Math.random()*0.1, 0.3 + Math.random()*0.2);
-      strand.rotation.set(Math.random()*0.5, Math.random()*Math.PI, Math.random()*0.5);
-      marik.add(strand);
-    }
-    const fringeGeom = new THREE.CapsuleGeometry(0.16, 0.15, 16, 32);
-    const fringe = new THREE.Mesh(fringeGeom, matHair);
-    fringe.position.set(0, 1.55, 0.45);
-    fringe.rotation.x = Math.PI / 3;
-    marik.add(fringe);
-    function makeEye(side) {
-      const eyeWhiteGeom = new THREE.SphereGeometry(0.12, 32, 32);
-      const white = new THREE.Mesh(eyeWhiteGeom, matWhite);
-      white.position.set(0.18 * side, 1.45, 0.45);
-      const irisGeom = new THREE.SphereGeometry(0.08, 32, 32);
-      const iris = new THREE.Mesh(irisGeom, new THREE.MeshStandardMaterial({color: 0x4d2600, roughness: 0.2}));
-      iris.position.set(0, 0, 0.04);
-      white.add(iris);
-      const pupilGeom = new THREE.SphereGeometry(0.05, 32, 32);
-      const pupil = new THREE.Mesh(pupilGeom, matEyes);
-      pupil.position.set(0, 0, 0.03);
-      iris.add(pupil);
-      const highlightGeom = new THREE.SphereGeometry(0.03, 16, 16);
-      const highlight = new THREE.Mesh(highlightGeom, new THREE.MeshBasicMaterial({ color: 0xffffff }));
-      highlight.position.set(0.02, 0.02, 0.04);
-      pupil.add(highlight);
-      marik.add(white);
-      return { white, pupil };
-    }
-    const leftEye = makeEye(-1);
-    const rightEye = makeEye(1);
-    function makeBrow(side) {
-      const browGeom = new THREE.CylinderGeometry(0.02, 0.02, 0.3, 32);
-      const brow = new THREE.Mesh(browGeom, matHair);
-      brow.position.set(0.21 * side, 1.6, 0.4);
-      brow.rotation.z = side * Math.PI / 8;
-      brow.castShadow = true;
-      marik.add(brow);
-      return brow;
-    }
-    const leftBrow = makeBrow(-1);
-    const rightBrow = makeBrow(1);
-    const noseGeom = new THREE.ConeGeometry(0.07, 0.18, 32, 8, true);
-    const nose = new THREE.Mesh(noseGeom, matSkin);
-    nose.rotation.x = Math.PI / 2;
-    nose.position.set(0, 1.42, 0.52);
-    nose.castShadow = true;
-    marik.add(nose);
-    const mouthGeom = new THREE.TorusGeometry(0.18, 0.04, 24, 64, Math.PI);
-    const mouth = new THREE.Mesh(mouthGeom, matMouth);
-    mouth.rotation.set(Math.PI, 0, 0);
-    mouth.position.set(0, 1.25, 0.48);
-    marik.add(mouth);
-    const teethGeom = new THREE.BoxGeometry(0.3, 0.05, 0.05);
-    const teeth = new THREE.Mesh(teethGeom, matWhite);
-    teeth.position.set(0, -0.02, 0.05);
-    mouth.add(teeth);
-    const tongueGeom = new THREE.SphereGeometry(0.08, 32, 32, 0, Math.PI, 0, Math.PI);
-    const tongue = new THREE.Mesh(tongueGeom, new THREE.MeshStandardMaterial({color:0xff6b8b, roughness:0.5}));
-    tongue.position.set(0, -0.04, 0.05);
-    mouth.add(tongue);
-    function makeArm(side) {
-      const shoulderGeom = new THREE.SphereGeometry(0.2, 32, 32);
-      const shoulder = new THREE.Mesh(shoulderGeom, matShirt);
-      shoulder.position.set(0.55 * side, 0.65, 0);
-      marik.add(shoulder);
-      const upperGeom = new THREE.CylinderGeometry(0.13, 0.15, 0.85, 32);
-      const upper = new THREE.Mesh(upperGeom, matShirt);
-      upper.castShadow = true;
-      upper.position.set(0, -0.5, 0);
-      shoulder.add(upper);
-      const elbowGeom = new THREE.SphereGeometry(0.14, 32, 32);
-      const elbow = new THREE.Mesh(elbowGeom, matSkin);
-      elbow.position.set(0, -0.45, 0.05);
-      upper.add(elbow);
-      const foreGeom = new THREE.CylinderGeometry(0.12, 0.13, 0.8, 32);
-      const fore = new THREE.Mesh(foreGeom, matSkin);
-      fore.castShadow = true;
-      fore.position.set(0, -0.4, 0);
-      elbow.add(fore);
-      const handGeom = new THREE.SphereGeometry(0.16, 32, 32);
-      handGeom.scale(1, 0.8, 1.2); // More hand-like
-      const hand = new THREE.Mesh(handGeom, matSkin);
-      hand.castShadow = true;
-      hand.position.set(0, -0.4, 0);
-      fore.add(hand);
-      return { shoulder, upper, elbow, fore, hand };
-    }
-    const leftArm = makeArm(-1);
-    const rightArm = makeArm(1);
-    function makeLeg(side) {
-      const thighGeom = new THREE.CylinderGeometry(0.2, 0.18, 0.7, 32);
-      const thigh = new THREE.Mesh(thighGeom, matPants);
-      thigh.position.set(0.25 * side, -0.35, 0);
-      marik.add(thigh);
-      const kneeGeom = new THREE.SphereGeometry(0.19, 32, 32);
-      const knee = new THREE.Mesh(kneeGeom, matPants);
-      knee.position.set(0, -0.35, 0.07);
-      thigh.add(knee);
-      const lowerLegGeom = new THREE.CylinderGeometry(0.16, 0.18, 0.6, 32);
-      const lowerLeg = new THREE.Mesh(lowerLegGeom, matPants);
-      lowerLeg.castShadow = true;
-      lowerLeg.position.set(0, -0.3, 0);
-      knee.add(lowerLeg);
-      const shoeGeom = new THREE.BoxGeometry(0.42, 0.25, 0.7, 8, 8, 8);
-      const shoe = new THREE.Mesh(shoeGeom, matShoes);
-      shoe.castShadow = true;
-      shoe.position.set(0, -0.3, 0.25);
-      lowerLeg.add(shoe);
-      return { thigh, knee, lowerLeg, shoe };
-    }
-    makeLeg(-1);
-    makeLeg(1);
+
+    // Загрузка FBX-модели
+    const loader = new THREE.FBXLoader();
+    let mixer = null;
+
+    loader.load(
+      "marik_idle.fbx",   // файл лежит рядом с index.html
+      (fbx) => {
+        const s = 0.01;   // масштаб Mixamo-модели
+        fbx.scale.set(s, s, s);
+        fbx.position.set(0, 0, 0);
+
+        fbx.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+
+        marik.add(fbx);
+
+        // Анимация из файла (если есть)
+        if (fbx.animations && fbx.animations.length > 0) {
+          mixer = new THREE.AnimationMixer(fbx);
+          const action = mixer.clipAction(fbx.animations[0]);
+          action.play();
+        }
+      },
+      undefined,
+      (err) => {
+        console.error("Ошибка загрузки FBX:", err);
+      }
+    );
+
+    // Облако "речи"
     const speech = document.getElementById("speech");
     let speechTimeout = null;
+
     function showSpeech(text, ms = 1000) {
       clearTimeout(speechTimeout);
       speech.textContent = text;
@@ -401,33 +275,39 @@
         speech.style.display = "none";
       }, ms);
     }
+
+    // Raycaster & взаимодействие
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     let isHoveringMarik = false;
     let isAngry = false;
     let angryTimer = 0;
     let lastPetTime = 0;
+
     function updateMouse(evt) {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((evt.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((evt.clientY - rect.top) / rect.height) * 2 + 1;
     }
+
     function checkHover() {
       raycaster.setFromCamera(mouse, camera);
       const hits = raycaster.intersectObject(marik, true);
       isHoveringMarik = hits.length > 0;
     }
+
     window.addEventListener("pointermove", (e) => {
       updateMouse(e);
       checkHover();
-      if (isHoveringMarik && e.movementX + e.movementY > 0) {
+      if (isHoveringMarik) {
         const now = performance.now();
-        if (now - lastPetTime > 300) {
+        if (now - lastPetTime > 350) {
           lastPetTime = now;
-          showSpeech("мрррр… 💜", 800);
+          showSpeech("мрррр… 💜", 700);
         }
       }
     });
+
     window.addEventListener("pointerdown", (e) => {
       updateMouse(e);
       raycaster.setFromCamera(mouse, camera);
@@ -435,105 +315,104 @@
       if (hits.length > 0) {
         isAngry = true;
         angryTimer = performance.now();
-        showSpeech("!!!###!!!???!!!", 1500);
+        showSpeech("!!!###!!!???!!!", 1300);
+
         const start = performance.now();
-        const initialPos = marik.position.clone();
+        const initialPosX = marik.position.x;
         function shake(timestamp) {
           const t = timestamp - start;
-          const power = Math.max(0, 1 - t / 400);
-          marik.position.x = initialPos.x + Math.sin(t * 0.08) * 0.1 * power;
-          marik.position.y = initialPos.y + Math.cos(t * 0.1) * 0.05 * power;
-          if (t < 400) requestAnimationFrame(shake);
-          else marik.position.copy(initialPos);
+          const power = Math.max(0, 1 - t / 300);
+          marik.position.x = initialPosX + Math.sin(t * 0.06) * 0.07 * power;
+          if (t < 300) requestAnimationFrame(shake);
+          else marik.position.x = initialPosX;
         }
         requestAnimationFrame(shake);
       }
     });
+
+    // Управление камерой
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
+
     renderer.domElement.addEventListener("pointerdown", (e) => {
       isDragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
     });
-    window.addEventListener("pointerup", () => { isDragging = false; });
-    window.addEventListener("pointerleave", () => { isDragging = false; });
+
+    window.addEventListener("pointerup", () => {
+      isDragging = false;
+    });
+
+    window.addEventListener("pointerleave", () => {
+      isDragging = false;
+    });
+
     window.addEventListener("pointermove", (e) => {
       if (!isDragging) return;
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
       lastX = e.clientX;
       lastY = e.clientY;
-      const ROT_SPEED = 0.004;
+
+      const ROT_SPEED = 0.005;
       camYaw -= dx * ROT_SPEED;
       camPitch -= dy * ROT_SPEED;
-      camPitch = Math.max(0.2, Math.min(Math.PI - 0.2, camPitch));
+
+      const minPitch = 0.4;
+      const maxPitch = Math.PI - 0.4;
+      camPitch = Math.max(minPitch, Math.min(maxPitch, camPitch));
+
       updateCamera();
     });
+
     window.addEventListener("wheel", (e) => {
-      const ZOOM_SPEED = 0.001;
+      const ZOOM_SPEED = 0.0015;
       camRadius += e.deltaY * ZOOM_SPEED * camRadius;
-      camRadius = Math.max(2.5, Math.min(7, camRadius));
+      camRadius = Math.max(3.2, Math.min(7, camRadius));
       updateCamera();
     }, { passive: true });
-    const composer = new THREE.EffectComposer(renderer);
-    const renderPass = new THREE.RenderPass(scene, camera);
-    composer.addPass(renderPass);
-    const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.8, 0.4, 0.85);
-    composer.addPass(bloomPass);
+
+    // Анимация
     const clock = new THREE.Clock();
-    const baseTorsoScaleY = torso.scale.y;
-    const baseLeftBrowY = leftBrow.position.y;
-    const baseRightBrowY = rightBrow.position.y;
-    let angryColorBoost = 0;
+    let elapsed = 0;
+    let angryBoost = 0;
+
     function animate() {
       requestAnimationFrame(animate);
-      const t = clock.getElapsedTime();
-      const breathe = Math.sin(t * 1.5) * 0.02;
-      torso.scale.y = baseTorsoScaleY + breathe;
-      torso.position.y = breathe * 0.08;
-      const handWave = Math.sin(t * 2) * 0.06;
-      leftArm.upper.rotation.z = -0.25 - handWave;
-      rightArm.upper.rotation.z = 0.25 + handWave;
-      const blinkPeriod = 4;
-      const blinkTime = t % blinkPeriod;
-      let eyeScaleY = 1.0;
-      if (blinkTime < 0.15) {
-        eyeScaleY = Math.cos((blinkTime / 0.15) * Math.PI);
-      }
-      leftEye.white.scale.y = eyeScaleY;
-      rightEye.white.scale.y = eyeScaleY;
+      const delta = clock.getDelta();
+      elapsed += delta;
+
+      if (mixer) mixer.update(delta);
+
+      // лёгкое «дыхание» сцены
+      marik.position.y = Math.sin(elapsed * 2) * 0.05;
+      marik.rotation.y = Math.sin(elapsed * 0.5) * 0.15;
+
       if (isAngry) {
-        const elapsed = performance.now() - angryTimer;
-        const k = Math.max(0, 1 - elapsed / 1500);
-        angryColorBoost = k;
+        const timeSince = performance.now() - angryTimer;
+        const k = Math.max(0, 1 - timeSince / 1200);
+        angryBoost = k;
         marik.scale.set(1 + 0.08 * k, 1 + 0.08 * k, 1 + 0.08 * k);
-        leftBrow.position.y = baseLeftBrowY + 0.1 * k;
-        rightBrow.position.y = baseRightBrowY + 0.1 * k;
-        leftBrow.rotation.z = -0.3 * k - Math.PI / 8;
-        rightBrow.rotation.z = 0.3 * k + Math.PI / 8;
-        if (k <= 0) {
+        if (k <= 0.01) {
           isAngry = false;
+          angryBoost = 0;
           marik.scale.set(1, 1, 1);
-          leftBrow.position.y = baseLeftBrowY;
-          rightBrow.position.y = baseRightBrowY;
-          leftBrow.rotation.z = -Math.PI / 8;
-          rightBrow.rotation.z = Math.PI / 8;
         }
       }
-      const boostedShirt = new THREE.Color(shirtColor).lerp(new THREE.Color(0xff4d4d), angryColorBoost * 0.6);
-      matShirt.color.copy(boostedShirt);
-      composer.render();
+
+      renderer.render(scene, camera);
     }
+
     animate();
+
     window.addEventListener("resize", () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
-      composer.setSize(w, h);
     });
   }
 </script>
