@@ -108,10 +108,33 @@
       padding: 20px;
       font-size: 16px;
     }
+    /* Мурчометр */
+    #mood-pill {
+      position: fixed;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.18);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+      max-width: 90vw;
+      white-space: nowrap;
+    }
+    #mood-emoji {
+      font-size: 16px;
+    }
     @media (max-width: 600px) {
       #title { font-size: 22px; }
       #subtitle { font-size: 12px; }
       #speech { font-size: 16px; }
+      #mood-pill { font-size: 11px; bottom: 68px; }
     }
   </style>
 </head>
@@ -124,6 +147,12 @@
 </div>
 
 <div id="speech"></div>
+
+<!-- Мурчометр -->
+<div id="mood-pill">
+  <span id="mood-emoji">🙂</span>
+  <span id="mood-text">Настроение: 0</span>
+</div>
 
 <div id="hints">
   <span>🖱️ ЛКМ + мышь — крутить камеру</span>
@@ -139,7 +168,7 @@
   </div>
 </div>
 
-<!-- 1) import map: говорим, что "three" = наш three.module.js -->
+<!-- importmap: говорим, что "three" = наш three.module.js -->
 <script type="importmap">
 {
   "imports": {
@@ -148,12 +177,61 @@
 }
 </script>
 
-<!-- 2) модульный скрипт -->
 <script type="module">
   import * as THREE from 'three';
   import { FBXLoader } from './FBXLoader.js';
 
   const errorMsg = document.getElementById('error-msg');
+  const speech = document.getElementById("speech");
+  const moodEmojiEl = document.getElementById("mood-emoji");
+  const moodTextEl = document.getElementById("mood-text");
+
+  // Фразы
+  const petPhrases = [
+    "мррр… 💜",
+    "о да… не останавливайся 😌",
+    "так-то лучше",
+    "я всегда знал, что ты добрый",
+    "ещё чуть-чуть…"
+  ];
+  const angryPhrases = [
+    "!!!###!!!???!!!",
+    "@#$%!!!",
+    "ты чё делаешь?!",
+    "ну за что?!!",
+    "эй! аккуратнее!"
+  ];
+
+  // Мурчометр
+  let mood = 0; // -100..100
+  const MOOD_MIN = -100;
+  const MOOD_MAX = 100;
+
+  function clampMood() {
+    if (mood < MOOD_MIN) mood = MOOD_MIN;
+    if (mood > MOOD_MAX) mood = MOOD_MAX;
+  }
+
+  function updateMoodUI() {
+    clampMood();
+    let emoji = "🙂";
+    if (mood > 40) emoji = "😊";
+    else if (mood < 0) emoji = "😠";
+    moodEmojiEl.textContent = emoji;
+
+    moodTextEl.textContent = `Настроение: ${mood}`;
+  }
+
+  updateMoodUI();
+
+  function showSpeech(text, ms = 1000) {
+    clearTimeout(showSpeech._timeout);
+    speech.textContent = text;
+    speech.style.display = "block";
+    showSpeech._timeout = setTimeout(() => {
+      speech.style.display = "none";
+    }, ms);
+  }
 
   try {
     initHappyMarik();
@@ -241,7 +319,10 @@
 
     const loader = new FBXLoader();
     let mixer = null;
+    let idleAction = null;
+    let fallAction = null;
 
+    // Загружаем основной idle FBX
     loader.load(
       'marik_idle.fbx',
       (fbx) => {
@@ -260,9 +341,26 @@
 
         if (fbx.animations && fbx.animations.length > 0) {
           mixer = new THREE.AnimationMixer(fbx);
-          const action = mixer.clipAction(fbx.animations[0]);
-          action.play();
+          idleAction = mixer.clipAction(fbx.animations[0]);
+          idleAction.play();
         }
+
+        // После основного — загружаем анимацию падения (если файл есть)
+        loader.load(
+          'marik_fall.fbx',
+          (fallFbx) => {
+            if (fallFbx.animations && fallFbx.animations.length > 0 && mixer) {
+              const fallClip = fallFbx.animations[0];
+              fallAction = mixer.clipAction(fallClip);
+              fallAction.loop = THREE.LoopOnce;
+              fallAction.clampWhenFinished = true;
+            }
+          },
+          undefined,
+          () => {
+            // Если файла нет — просто тихо игнорируем
+          }
+        );
       },
       undefined,
       (err) => {
@@ -270,18 +368,6 @@
         errorMsg.style.display = 'flex';
       }
     );
-
-    const speech = document.getElementById("speech");
-    let speechTimeout = null;
-
-    function showSpeech(text, ms = 1000) {
-      clearTimeout(speechTimeout);
-      speech.textContent = text;
-      speech.style.display = "block";
-      speechTimeout = setTimeout(() => {
-        speech.style.display = "none";
-      }, ms);
-    }
 
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
@@ -302,6 +388,7 @@
       isHoveringMarik = hits.length > 0;
     }
 
+    // Поглаживания
     window.addEventListener("pointermove", (e) => {
       updateMouse(e);
       checkHover();
@@ -309,11 +396,19 @@
         const now = performance.now();
         if (now - lastPetTime > 350) {
           lastPetTime = now;
-          showSpeech("мрррр… 💜", 700);
+
+          // настроение +10
+          mood += 10;
+          clampMood();
+          updateMoodUI();
+
+          const phrase = petPhrases[Math.floor(Math.random() * petPhrases.length)];
+          showSpeech(phrase, 800);
         }
       }
     });
 
+    // Удары
     window.addEventListener("pointerdown", (e) => {
       updateMouse(e);
       raycaster.setFromCamera(mouse, camera);
@@ -321,14 +416,35 @@
       if (hits.length > 0) {
         isAngry = true;
         angryTimer = performance.now();
-        showSpeech("!!!###!!!???!!!", 1300);
 
+        // настроение -25
+        mood -= 25;
+        clampMood();
+        updateMoodUI();
+
+        const phrase = angryPhrases[Math.floor(Math.random() * angryPhrases.length)];
+        showSpeech(phrase, 1300);
+
+        // Анимация падения, если есть
+        if (fallAction && idleAction && mixer) {
+          idleAction.fadeOut(0.15);
+          fallAction.reset().fadeIn(0.1).play();
+
+          // через ~0.9 сек возвращаемся к idle
+          setTimeout(() => {
+            fallAction.fadeOut(0.25);
+            idleAction.reset().fadeIn(0.25).play();
+          }, 900);
+        }
+
+        // Дополнительная тряска
         const start = performance.now();
         const initialPosX = marik.position.x;
+        const badFactor = 1 + Math.max(0, -mood / 100); // чем хуже настроение, тем сильнее
         function shake(timestamp) {
           const t = timestamp - start;
           const power = Math.max(0, 1 - t / 300);
-          marik.position.x = initialPosX + Math.sin(t * 0.06) * 0.07 * power;
+          marik.position.x = initialPosX + Math.sin(t * 0.06) * 0.07 * power * badFactor;
           if (t < 300) requestAnimationFrame(shake);
           else marik.position.x = initialPosX;
         }
@@ -336,6 +452,7 @@
       }
     });
 
+    // Управление камерой
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
@@ -389,8 +506,13 @@
 
       if (mixer) mixer.update(delta);
 
-      marik.position.y = Math.sin(elapsed * 2) * 0.05;
-      marik.rotation.y = Math.sin(elapsed * 0.5) * 0.15;
+      // Амплитуда покачивания зависит от настроения
+      const moodNorm = (mood + 100) / 200; // 0..1
+      const bobAmp = 0.03 + 0.04 * moodNorm;     // чем лучше настроение, тем больше подпрыгивает
+      const swayAmp = 0.12 + 0.08 * moodNorm;
+
+      marik.position.y = Math.sin(elapsed * 2) * bobAmp;
+      marik.rotation.y = Math.sin(elapsed * 0.5) * swayAmp;
 
       renderer.render(scene, camera);
     }
