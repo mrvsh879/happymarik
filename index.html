@@ -262,6 +262,211 @@
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0x05060b, 6, 18);
 
+    // === ОФИСНЫЙ 3D-ФОН ===
+    const backgroundGroup = new THREE.Group();
+    scene.add(backgroundGroup);
+    let plant = null; // для анимации растения в animate()
+
+    // Пол офиса
+    const officeFloorGeom = new THREE.PlaneGeometry(12, 10);
+    const officeFloorMat = new THREE.MeshStandardMaterial({
+      color: 0x2b2f3a,
+      roughness: 0.8,
+      metalness: 0.1
+    });
+    const officeFloor = new THREE.Mesh(officeFloorGeom, officeFloorMat);
+    officeFloor.rotation.x = -Math.PI / 2;
+    officeFloor.position.y = 0;
+    officeFloor.receiveShadow = true;
+    backgroundGroup.add(officeFloor);
+
+    // Задняя стена
+    const backWallGeom = new THREE.PlaneGeometry(12, 6);
+    const backWallMat = new THREE.MeshStandardMaterial({
+      color: 0x1f2230,
+      roughness: 0.9,
+      metalness: 0.05
+    });
+    const backWall = new THREE.Mesh(backWallGeom, backWallMat);
+    backWall.position.set(0, 3, -5);
+    backWall.receiveShadow = false;
+    backgroundGroup.add(backWall);
+
+    // Левая стена
+    const leftWallGeom = new THREE.PlaneGeometry(10, 6);
+    const leftWallMat = new THREE.MeshStandardMaterial({
+      color: 0x212433,
+      roughness: 0.85,
+      metalness: 0.05
+    });
+    const leftWall = new THREE.Mesh(leftWallGeom, leftWallMat);
+    leftWall.position.set(-6, 3, 0);
+    leftWall.rotation.y = Math.PI / 2;
+    backgroundGroup.add(leftWall);
+
+    // Правая стена
+    const rightWallGeom = new THREE.PlaneGeometry(10, 6);
+    const rightWallMat = new THREE.MeshStandardMaterial({
+      color: 0x262a3a,
+      roughness: 0.8,
+      metalness: 0.08
+    });
+    const rightWall = new THREE.Mesh(rightWallGeom, rightWallMat);
+    rightWall.position.set(6, 3, 0);
+    rightWall.rotation.y = -Math.PI / 2;
+    backgroundGroup.add(rightWall);
+
+    // "Окно" на задней стене
+    const windowGeom = new THREE.PlaneGeometry(4, 2);
+    const windowMat = new THREE.MeshStandardMaterial({
+      color: 0x11131e,
+      emissive: 0x1f5cff,
+      emissiveIntensity: 0.35,
+      metalness: 0.2,
+      roughness: 0.4
+    });
+    const windowMesh = new THREE.Mesh(windowGeom, windowMat);
+    windowMesh.position.set(-2.5, 3.2, -4.99);
+    backgroundGroup.add(windowMesh);
+
+    // Рамы окна
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: 0x101219,
+      metalness: 0.2,
+      roughness: 0.7
+    });
+    const frameHGeom = new THREE.BoxGeometry(4.2, 0.07, 0.08);
+    const frameVGeom = new THREE.BoxGeometry(0.07, 2.1, 0.08);
+
+    const frameTop = new THREE.Mesh(frameHGeom, frameMat);
+    frameTop.position.set(-2.5, 4.25, -4.98);
+    const frameBottom = frameTop.clone();
+    frameBottom.position.y = 2.15;
+
+    const frameLeft = new THREE.Mesh(frameVGeom, frameMat);
+    frameLeft.position.set(-4.6, 3.2, -4.98);
+    const frameRight = frameLeft.clone();
+    frameRight.position.x = -0.4;
+
+    backgroundGroup.add(frameTop, frameBottom, frameLeft, frameRight);
+
+    // Стол
+    const deskTopGeom = new THREE.BoxGeometry(3.2, 0.12, 1.4);
+    const deskTopMat = new THREE.MeshStandardMaterial({
+      color: 0x383c4a,
+      roughness: 0.7,
+      metalness: 0.15
+    });
+    const deskTop = new THREE.Mesh(deskTopGeom, deskTopMat);
+    deskTop.position.set(1.8, 1.0, -1.5);
+    deskTop.castShadow = true;
+    deskTop.receiveShadow = true;
+    backgroundGroup.add(deskTop);
+
+    const deskLegGeom = new THREE.BoxGeometry(0.12, 1.0, 0.12);
+    const deskLegMat = new THREE.MeshStandardMaterial({
+      color: 0x232733,
+      roughness: 0.8,
+      metalness: 0.1
+    });
+    const legOffsets = [
+      [-1.45, -0.6],
+      [1.45, -0.6],
+      [-1.45, 0.6],
+      [1.45, 0.6]
+    ];
+    for (const [dx, dz] of legOffsets) {
+      const leg = new THREE.Mesh(deskLegGeom, deskLegMat);
+      leg.position.set(deskTop.position.x + dx, 0.5, deskTop.position.z + dz);
+      leg.castShadow = true;
+      leg.receiveShadow = true;
+      backgroundGroup.add(leg);
+    }
+
+    // Монитор
+    const monitorGeom = new THREE.BoxGeometry(1.4, 0.85, 0.05);
+    const monitorMat = new THREE.MeshStandardMaterial({
+      color: 0x111319,
+      emissive: 0x2f8dff,
+      emissiveIntensity: 0.7,
+      metalness: 0.4,
+      roughness: 0.3
+    });
+    const monitor = new THREE.Mesh(monitorGeom, monitorMat);
+    monitor.position.set(deskTop.position.x, deskTop.position.y + 0.65, deskTop.position.z - 0.15);
+    monitor.castShadow = true;
+    backgroundGroup.add(monitor);
+
+    const monitorStandGeom = new THREE.BoxGeometry(0.12, 0.4, 0.12);
+    const monitorStand = new THREE.Mesh(monitorStandGeom, deskLegMat);
+    monitorStand.position.set(deskTop.position.x, deskTop.position.y + 0.25, deskTop.position.z);
+    monitorStand.castShadow = true;
+    monitorStand.receiveShadow = true;
+    backgroundGroup.add(monitorStand);
+
+    // Стул
+    const chairSeatGeom = new THREE.BoxGeometry(0.9, 0.12, 0.9);
+    const chairSeatMat = new THREE.MeshStandardMaterial({
+      color: 0x303546,
+      roughness: 0.7,
+      metalness: 0.2
+    });
+    const chairSeat = new THREE.Mesh(chairSeatGeom, chairSeatMat);
+    chairSeat.position.set(1.8, 0.6, -0.3);
+    chairSeat.castShadow = true;
+    chairSeat.receiveShadow = true;
+    backgroundGroup.add(chairSeat);
+
+    const chairBackGeom = new THREE.BoxGeometry(0.9, 1.0, 0.12);
+    const chairBack = new THREE.Mesh(chairBackGeom, chairSeatMat);
+    chairBack.position.set(chairSeat.position.x, chairSeat.position.y + 0.56, chairSeat.position.z + 0.45);
+    chairBack.castShadow = true;
+    backgroundGroup.add(chairBack);
+
+    const chairLegGeom = new THREE.CylinderGeometry(0.06, 0.06, 0.5, 12);
+    const chairLegMat = new THREE.MeshStandardMaterial({
+      color: 0x1f222b,
+      roughness: 0.5,
+      metalness: 0.6
+    });
+    const chairLeg = new THREE.Mesh(chairLegGeom, chairLegMat);
+    chairLeg.position.set(chairSeat.position.x, 0.25, chairSeat.position.z);
+    chairLeg.castShadow = true;
+    chairLeg.receiveShadow = true;
+    backgroundGroup.add(chairLeg);
+
+    const chairBaseGeom = new THREE.BoxGeometry(0.7, 0.06, 0.06);
+    const chairBase1 = new THREE.Mesh(chairBaseGeom, chairLegMat);
+    chairBase1.position.set(chairSeat.position.x, 0.03, chairSeat.position.z);
+    const chairBase2 = chairBase1.clone();
+    chairBase2.rotation.y = Math.PI / 2;
+    backgroundGroup.add(chairBase1, chairBase2);
+
+    // Растение
+    const potGeom = new THREE.CylinderGeometry(0.2, 0.26, 0.3, 12);
+    const potMat = new THREE.MeshStandardMaterial({
+      color: 0x44414a,
+      roughness: 0.8,
+      metalness: 0.2
+    });
+    const pot = new THREE.Mesh(potGeom, potMat);
+    pot.position.set(-3.5, 0.15, -2.0);
+    pot.castShadow = true;
+    pot.receiveShadow = true;
+    backgroundGroup.add(pot);
+
+    const plantGeom = new THREE.ConeGeometry(0.45, 1.0, 14);
+    const plantMat = new THREE.MeshStandardMaterial({
+      color: 0x36b86c,
+      roughness: 0.5,
+      metalness: 0.1
+    });
+    plant = new THREE.Mesh(plantGeom, plantMat);
+    plant.position.set(pot.position.x, pot.position.y + 0.75, pot.position.z);
+    plant.castShadow = true;
+    backgroundGroup.add(plant);
+
+    // === КАМЕРА И СВЕТ ДАЛЬШЕ КАК БЫЛО ===
     const camera = new THREE.PerspectiveCamera(
       55,
       window.innerWidth / window.innerHeight,
@@ -299,6 +504,7 @@
     dirLight.shadow.camera.bottom = -7;
     scene.add(dirLight);
 
+    // Старый круглый "подиум" под Мариком
     const floorGeom = new THREE.CircleGeometry(4, 64);
     const floorMat = new THREE.MeshStandardMaterial({
       color: 0x181c30,
@@ -612,6 +818,13 @@
 
       marik.position.y = Math.sin(elapsed * 2) * bobAmp;
       marik.rotation.y = Math.sin(elapsed * 0.5) * swayAmp;
+
+      // Офисный фон: лёгкое "дыхание" сцены + качание растения
+      backgroundGroup.rotation.y = Math.sin(elapsed * 0.1) * 0.03;
+
+      if (plant) {
+        plant.rotation.z = Math.sin(elapsed * 1.2) * 0.05;
+      }
 
       renderer.render(scene, camera);
     }
