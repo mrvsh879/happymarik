@@ -257,7 +257,34 @@
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.setClearColor(0x05060b, 1);
     container.appendChild(renderer.domElement);
-    renderer.domElement.style.cursor = 'grab';
+
+    // ====== СИСТЕМА КУРСОРОВ ======
+    const canvasEl = renderer.domElement;
+
+    function setCursor(mode) {
+      switch (mode) {
+        case 'idle': // рука над Мариком
+          canvasEl.style.cursor = 'url("./cursors/hand_idle.png") 16 16, auto';
+          break;
+        case 'pet': // гладим
+          canvasEl.style.cursor = 'url("./cursors/hand_pet.png") 16 16, auto';
+          break;
+        case 'punch': // удар
+          canvasEl.style.cursor = 'url("./cursors/hand_fist.png") 16 16, auto';
+          break;
+        case 'rotate': // обычный режим камеры
+          canvasEl.style.cursor = 'grab';
+          break;
+        case 'rotateActive': // тащим камеру
+          canvasEl.style.cursor = 'grabbing';
+          break;
+        default:
+          canvasEl.style.cursor = 'auto';
+      }
+    }
+
+    // стартовый курсор — вращение камеры
+    setCursor('rotate');
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0x05060b, 6, 18);
@@ -316,7 +343,7 @@
     rightWall.rotation.y = -Math.PI / 2;
     backgroundGroup.add(rightWall);
 
-    // "рамка"
+    // "рамка" экрана
     const windowGeom = new THREE.PlaneGeometry(4, 2);
     const windowMat = new THREE.MeshStandardMaterial({
       color: 0x11131e,
@@ -501,7 +528,7 @@
     plant.castShadow = true;
     backgroundGroup.add(plant);
 
-    // === КАМЕРА И СВЕТ ДАЛЬШЕ КАК БЫЛО ===
+    // === КАМЕРА И СВЕТ ===
     const camera = new THREE.PerspectiveCamera(
       55,
       window.innerWidth / window.innerHeight,
@@ -539,21 +566,21 @@
     dirLight.shadow.camera.bottom = -7;
     scene.add(dirLight);
 
-    // ТЁМНЫЙ КРУГ-ПОЛ ПОД МАРИКОМ — ДЕЛАЕМ ЕГО ПОЛНОСТЬЮ ПРОЗРАЧНЫМ
+    // Круг-пол под Мариком — невидимый
     const floorGeom = new THREE.CircleGeometry(4, 64);
     const floorMat = new THREE.MeshStandardMaterial({
       color: 0x181c30,
       roughness: 0.75,
       metalness: 0.05,
       transparent: true,
-      opacity: 0.0   // <-- круг есть в сцене, но невидимый
+      opacity: 0.0
     });
     const floor = new THREE.Mesh(floorGeom, floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
 
-    // Маленький голубой светящийся круг (оставляем как есть)
+    // Маленький голубой светящийся круг
     const glowGeom = new THREE.CircleGeometry(1.6, 40);
     const glowMat = new THREE.MeshBasicMaterial({
       color: 0x5f9dff,
@@ -691,10 +718,12 @@
       const hits = raycaster.intersectObject(marik, true);
       isHoveringMarik = hits.length > 0;
 
-      if (isHoveringMarik && !isDragging) {
-        renderer.domElement.style.cursor = 'pointer';
-      } else if (!isDragging) {
-        renderer.domElement.style.cursor = 'grab';
+      if (!isDragging) {
+        if (isHoveringMarik) {
+          setCursor('idle');   // рука над Мариком
+        } else {
+          setCursor('rotate'); // обычный режим
+        }
       }
     }
 
@@ -703,6 +732,9 @@
       updateMouse(e);
       checkHover();
       if (isHoveringMarik) {
+        // пока водим по Марику — ладонь "гладит"
+        setCursor('pet');
+
         const now = performance.now();
         if (now - lastPetTime > 350) {
           lastPetTime = now;
@@ -724,6 +756,9 @@
           // может начать танцевать
           maybeStartDance();
         }
+      } else if (!isDragging) {
+        // ушли с Марика — возвращаем обычный курсор
+        setCursor('rotate');
       }
     });
 
@@ -747,6 +782,16 @@
       raycaster.setFromCamera(mouse, camera);
       const hits = raycaster.intersectObject(marik, true);
       if (hits.length > 0) {
+        // курсор-кулак на удар
+        setCursor('punch');
+        setTimeout(() => {
+          if (isHoveringMarik && !isDragging) {
+            setCursor('idle');
+          } else if (!isDragging) {
+            setCursor('rotate');
+          }
+        }, 150);
+
         mood -= 25;
         clampMood();
         updateMoodUI();
@@ -800,17 +845,25 @@
       isDragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
-      renderer.domElement.style.cursor = 'grabbing';
+
+      // если нажали не по Марику — вращаем камеру
+      if (!isHoveringMarik) {
+        setCursor('rotateActive');
+      }
     });
 
     window.addEventListener("pointerup", () => {
       isDragging = false;
-      renderer.domElement.style.cursor = isHoveringMarik ? 'pointer' : 'grab';
+      if (isHoveringMarik) {
+        setCursor('idle');
+      } else {
+        setCursor('rotate');
+      }
     });
 
     window.addEventListener("pointerleave", () => {
       isDragging = false;
-      renderer.domElement.style.cursor = isHoveringMarik ? 'pointer' : 'grab';
+      setCursor('rotate');
     });
 
     window.addEventListener("pointermove", (e) => {
